@@ -3,7 +3,6 @@ from typing import Optional, cast
 
 import requests
 from requests import Session
-from typing_extensions import Self
 
 if typing.TYPE_CHECKING:
     from yayarl import URL

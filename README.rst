@@ -1,5 +1,5 @@
 yayarl
-====
+======
 
 This library is a fork of [aio-libs/yarl](https://github.com/aio-libs/yarl).
 This fork adds HTTP verbs to the URL object via `requests`.
@@ -7,7 +7,7 @@ Since yarl.URL is marked as `@final`, subclassing it with this added functionali
 
 
 Features added in this fork
----------------
+---------------------------
 All HTTP verbs from `requests` were added to the `URL` object. This allows you to easily perform actions on the url:
 
 .. code-block:: pycon
