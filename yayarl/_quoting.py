@@ -4,9 +4,9 @@ import sys
 __all__ = ("_Quoter", "_Unquoter")
 
 
-NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))  # type: bool
-if sys.implementation.name != "cpython":
-    NO_EXTENSIONS = True
+# NO_EXTENSIONS = bool(os.environ.get("YARL_NO_EXTENSIONS"))  # type: bool
+# if sys.implementation.name != "cpython":
+NO_EXTENSIONS = True
 
 
 if not NO_EXTENSIONS:  # pragma: no branch

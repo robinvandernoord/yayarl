@@ -10,6 +10,7 @@ import idna
 from multidict import MultiDict, MultiDictProxy
 
 from ._quoting import _Quoter, _Unquoter
+from ._requests import RequestsMixin
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443}
 
@@ -77,7 +78,7 @@ def _normalize_path_segments(segments):
 
 
 @rewrite_module
-class URL:
+class URL(RequestsMixin):
     # Don't derive from str
     # follow pathlib.Path design
     # probably URL will not suffer from pathlib problems:
@@ -341,8 +342,8 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name):
-        if not isinstance(name, str):
-            return NotImplemented
+        # if not isinstance(name, str):
+        #     return NotImplemented
         return self._make_child((str(name),))
 
     def __mod__(self, query):

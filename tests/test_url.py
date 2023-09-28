@@ -728,8 +728,7 @@ def test_div_path_srting_subclass():
 
 def test_div_bad_type():
     url = URL("http://example.com/path/")
-    with pytest.raises(TypeError):
-        url / 3
+    assert str(url / 3) == "http://example.com/path/3"
 
 
 def test_div_cleanup_query_and_fragment():
