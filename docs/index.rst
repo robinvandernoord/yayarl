@@ -16,7 +16,12 @@ URL is constructed from :class:`str`:
 
 .. doctest::
 
-   >>> from yarl import URL
+   >>> from yayarl import URL
+      >>> url = URL('https://www.python.org/~guido?arg=1#frag')
+      >>> url
+      URL('https://www.python.org/~guido?arg=1#frag')
+
+   All URL parts:
    >>> url = URL('https://www.python.org/~guido?arg=1#frag')
    >>> url
    URL('https://www.python.org/~guido?arg=1#frag')

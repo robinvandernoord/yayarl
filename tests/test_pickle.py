@@ -1,6 +1,6 @@
 import pickle
 
-from yarl import URL
+from yayarl import URL
 
 # serialize
 

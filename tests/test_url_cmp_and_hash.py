@@ -1,4 +1,4 @@
-from yarl import URL
+from yayarl import URL
 
 # comparison and hashing
 

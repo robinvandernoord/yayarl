@@ -1,29 +1,21 @@
+yayarl
+====
+
+This library is a fork of [aio-libs/yarl](https://github.com/aio-libs/yarl).
+This fork adds HTTP verbs to the URL object via `requests`.
+Since yarl.URL is marked as `@final`, subclassing it with this added functionality was not possible, thus this clone was born.
+
+
+Features added in this fork
+---------------
+
+
+*The original documentation follows below:*
+
 yarl
 ====
 
 The module provides handy URL class for URL parsing and changing.
-
-.. image:: https://github.com/aio-libs/yarl/workflows/CI/badge.svg
-  :target: https://github.com/aio-libs/yarl/actions?query=workflow%3ACI
-  :align: right
-
-.. image:: https://codecov.io/gh/aio-libs/yarl/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/aio-libs/yarl
-
-.. image:: https://badge.fury.io/py/yarl.svg
-    :target: https://badge.fury.io/py/yarl
-
-
-.. image:: https://readthedocs.org/projects/yarl/badge/?version=latest
-    :target: https://yarl.readthedocs.io
-
-
-.. image:: https://img.shields.io/pypi/pyversions/yarl.svg
-    :target: https://pypi.python.org/pypi/yarl
-
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-    :target: https://gitter.im/aio-libs/Lobby
-    :alt: Chat on Gitter
 
 Introduction
 ------------
@@ -32,6 +24,18 @@ Url is constructed from ``str``:
 
 .. code-block:: pycon
 
+   >>> from yayarl import URL
+   >>> url = URL('https://www.python.org/~guido?arg=1#frag')
+   >>> url
+   URL('https://www.python.org/~guido?arg=1#frag')
+
+All url parts:
+   >>> from yayarl import URL
+   >>> url = URL('https://www.python.org/~guido?arg=1#frag')
+   >>> url
+   URL('https://www.python.org/~guido?arg=1#frag')
+
+All url parts:
    >>> from yarl import URL
    >>> url = URL('https://www.python.org/~guido?arg=1#frag')
    >>> url

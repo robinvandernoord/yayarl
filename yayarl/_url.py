@@ -17,7 +17,7 @@ sentinel = object()
 
 
 def rewrite_module(obj: object) -> object:
-    obj.__module__ = "yarl"
+    obj.__module__ = "yayarl"
     return obj
 
 

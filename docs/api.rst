@@ -11,7 +11,7 @@ The only public *yarl* class is :class:`URL`:
 
 .. doctest::
 
-   >>> from yarl import URL
+   >>> from yayarl import URL
 
 
 .. class:: URL(arg, *, encoded=False)

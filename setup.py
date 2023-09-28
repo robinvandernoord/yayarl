@@ -11,7 +11,9 @@ if sys.implementation.name != "cpython":
     NO_EXTENSIONS = True
 
 
-extensions = [Extension("yarl._quoting_c", ["yarl/_quoting_c.c"])]
+extensions = [
+    # Extension("yarl._quoting_c", ["yayarl/_quoting_c.c"])
+]
 
 
 here = pathlib.Path(__file__).parent

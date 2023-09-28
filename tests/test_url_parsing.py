@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from yarl import URL
+from yayarl import URL
 
 
 class TestScheme:

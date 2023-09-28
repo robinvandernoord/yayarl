@@ -4,7 +4,7 @@ from urllib.parse import parse_qs, urlencode
 import pytest
 from multidict import MultiDict, MultiDictProxy
 
-from yarl import URL
+from yayarl import URL
 
 # ========================================
 # Basic chars in query values
