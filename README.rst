@@ -8,7 +8,27 @@ Since yarl.URL is marked as `@final`, subclassing it with this added functionali
 
 Features added in this fork
 ---------------
+All HTTP verbs from `requests` were added to the `URL` object. This allows you to easily perform actions on the url:
 
+.. code-block:: pycon
+
+   >>> from yayarl import URL
+   >>> url = URL('https://www.python.org/~guido?arg=1#frag')
+   >>> url
+   URL('https://www.python.org/~guido?arg=1#frag')
+   # new:
+   >>> url.get() # performs a GET request, returns requests.Response
+
+You can also bind a `requests.Session` to the `URL`:
+
+.. code-block:: pycon
+
+   >>> with requests.Session() as session:
+   >>>     url &= session
+   # all requests will now be performed in the same session.
+
+Typing: before, passing a `URL` to `requests.get()` would lead to a type warning, since requests expected a simple str.
+All keyword arguments for each HTTP verb are added in a pyi file, so your editor should give hints about possibile parameters.
 
 *The original documentation follows below:*
 

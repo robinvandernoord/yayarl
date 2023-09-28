@@ -14,6 +14,14 @@ Changelog
 
 .. towncrier release notes start
 
+2.0.0 (2023-09-28)
+==================
+
+Features
+--------
+
+- First version of the yayarl fork; add `requests` functionality.
+
 1.9.2 (2023-04-25)
 ==================
 
