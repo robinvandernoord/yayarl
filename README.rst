@@ -1,9 +1,11 @@
 yayarl
 ======
 
-This library is a fork of [aio-libs/yarl](https://github.com/aio-libs/yarl).
-This fork adds HTTP verbs to the URL object via `requests`.
-Since yarl.URL is marked as `@final`, subclassing it with this added functionality was not possible, thus this clone was born.
+This library is a fork of `aio-libs/yarl`_.
+Credit to the original author: Andrew Svetlov, AIOHTTP.
+
+This fork adds HTTP verbs to the URL object via ``requests``.
+Since yarl.URL is marked as ``@final``, subclassing it with this added functionality was not possible, thus this clone was born.
 
 
 Features added in this fork
@@ -226,3 +228,5 @@ It's *Apache 2* licensed and freely available.
 .. _GitHub: https://github.com/aio-libs/yarl
 
 .. _multidict: https://github.com/aio-libs/multidict
+
+.. _aio-libs/yarl: https://github.com/aio-libs/yarl
