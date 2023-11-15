@@ -14,6 +14,14 @@ Changelog
 
 .. towncrier release notes start
 
+2.1.0 (2023-11-15)
+==================
+
+Features
+--------
+
+- Bring up to date with `aio-libs/yarl`
+
 2.0.0 (2023-09-28)
 ==================
 
