@@ -1,6 +1,6 @@
 import pytest
 
-from yarl import URL
+from yayarl import URL
 
 # build classmethod
 

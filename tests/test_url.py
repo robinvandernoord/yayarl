@@ -3,7 +3,7 @@ from urllib.parse import SplitResult, quote, unquote
 
 import pytest
 
-from yarl import URL
+from yayarl import URL
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
@@ -938,8 +938,7 @@ def test_div_path_srting_subclass() -> None:
 
 def test_div_bad_type() -> None:
     url = URL("http://example.com/path/")
-    with pytest.raises(TypeError):
-        url / 3  # type: ignore[operator]
+    assert str(url / 3) == "http://example.com/path/3"
 
 
 def test_div_cleanup_query_and_fragment() -> None:
@@ -1806,8 +1805,8 @@ def test_to_idna() -> None:
 
 
 def test_from_ascii_login() -> None:
-    url = URL("http://" "%D0%B2%D0%B0%D1%81%D1%8F" "@host:1234/")
-    assert ("http://" "%D0%B2%D0%B0%D1%81%D1%8F" "@host:1234/") == str(url)
+    url = URL("http://%D0%B2%D0%B0%D1%81%D1%8F@host:1234/")
+    assert ("http://%D0%B2%D0%B0%D1%81%D1%8F@host:1234/") == str(url)
 
 
 def test_from_non_ascii_login() -> None:
@@ -1841,16 +1840,16 @@ def test_from_non_ascii_login_and_password() -> None:
 
 
 def test_from_ascii_path() -> None:
-    url = URL("http://example.com/" "%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0")
+    url = URL("http://example.com/%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0")
     assert (
-        "http://example.com/" "%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
+        "http://example.com/%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
     ) == str(url)
 
 
 def test_from_ascii_path_lower_case() -> None:
-    url = URL("http://example.com/" "%d0%bf%d1%83%d1%82%d1%8c/%d1%82%d1%83%d0%b4%d0%b0")
+    url = URL("http://example.com/%d0%bf%d1%83%d1%82%d1%8c/%d1%82%d1%83%d0%b4%d0%b0")
     assert (
-        "http://example.com/" "%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
+        "http://example.com/%D0%BF%D1%83%D1%82%D1%8C/%D1%82%D1%83%D0%B4%D0%B0"
     ) == str(url)
 
 
@@ -1871,23 +1870,17 @@ def test_bytes() -> None:
 
 def test_from_ascii_query_parts() -> None:
     url = URL(
-        "http://example.com/"
-        "?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC"
-        "=%D0%B7%D0%BD%D0%B0%D1%87"
+        "http://example.com/?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=%D0%B7%D0%BD%D0%B0%D1%87"
     )
     assert (
-        "http://example.com/"
-        "?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC"
-        "=%D0%B7%D0%BD%D0%B0%D1%87"
+        "http://example.com/?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=%D0%B7%D0%BD%D0%B0%D1%87"
     ) == str(url)
 
 
 def test_from_non_ascii_query_parts() -> None:
     url = URL("http://example.com/?парам=знач")
     assert (
-        "http://example.com/"
-        "?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC"
-        "=%D0%B7%D0%BD%D0%B0%D1%87"
+        "http://example.com/?%D0%BF%D0%B0%D1%80%D0%B0%D0%BC=%D0%B7%D0%BD%D0%B0%D1%87"
     ) == str(url)
 
 
@@ -1897,16 +1890,16 @@ def test_from_non_ascii_query_parts2() -> None:
 
 
 def test_from_ascii_fragment() -> None:
-    url = URL("http://example.com/" "#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82")
+    url = URL("http://example.com/#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82")
     assert (
-        "http://example.com/" "#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82"
+        "http://example.com/#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82"
     ) == str(url)
 
 
 def test_from_bytes_with_non_ascii_fragment() -> None:
     url = URL("http://example.com/#фрагмент")
     assert (
-        "http://example.com/" "#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82"
+        "http://example.com/#%D1%84%D1%80%D0%B0%D0%B3%D0%BC%D0%B5%D0%BD%D1%82"
     ) == str(url)
 
 
@@ -1917,12 +1910,10 @@ def test_to_str() -> None:
 
 def test_to_str_long() -> None:
     url = URL(
-        "https://host-12345678901234567890123456789012345678901234567890" "-name:8888/"
+        "https://host-12345678901234567890123456789012345678901234567890-name:8888/"
     )
     expected = (
-        "https://host-"
-        "12345678901234567890123456789012345678901234567890"
-        "-name:8888/"
+        "https://host-12345678901234567890123456789012345678901234567890-name:8888/"
     )
     assert expected == str(url)
 

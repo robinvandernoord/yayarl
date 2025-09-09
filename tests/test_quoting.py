@@ -4,14 +4,14 @@ import pytest
 from hypothesis import assume, example, given, note
 from hypothesis import strategies as st
 
-import yarl
-from yarl._quoting import NO_EXTENSIONS, _Quoter, _Unquoter
-from yarl._quoting_py import _Quoter as _PyQuoter
-from yarl._quoting_py import _Unquoter as _PyUnquoter
+import yayarl
+from yayarl._quoting import NO_EXTENSIONS, _Quoter, _Unquoter
+from yayarl._quoting_py import _Quoter as _PyQuoter
+from yayarl._quoting_py import _Unquoter as _PyUnquoter
 
 if not NO_EXTENSIONS:
-    from yarl._quoting_c import _Quoter as _CQuoter  # type: ignore[import-not-found]
-    from yarl._quoting_c import _Unquoter as _CUnquoter
+    from yayarl._quoting_c import _Quoter as _CQuoter  # type: ignore[import-not-found]
+    from yayarl._quoting_c import _Unquoter as _CUnquoter
 
     @pytest.fixture(params=[_PyQuoter, _CQuoter], ids=["py_quoter", "c_quoter"])
     def quoter(request: pytest.FixtureRequest) -> Union[_PyQuoter, _CQuoter]:  # type: ignore[no-any-unimported,misc,unused-ignore]
@@ -43,7 +43,7 @@ else:
 
 @pytest.mark.skipif(NO_EXTENSIONS, reason="Extensions available but not imported")
 def test_quoting_c_loaded() -> None:
-    assert "_quoting_c" in dir(yarl)
+    assert "_quoting_c" in dir(yayarl)
 
 
 def hexescape(char: str) -> str:
@@ -108,9 +108,7 @@ def test_unquote_to_bytes(unquoter: type[_Unquoter]) -> None:
 
 def test_never_quote(quoter: type[_Quoter]) -> None:
     # Make sure quote() does not quote letters, digits, and "_,.-~"
-    do_not_quote = (
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz" "0123456789" "_.-~"
-    )
+    do_not_quote = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-~"
     assert quoter()(do_not_quote) == do_not_quote
     assert quoter(qs=True)(do_not_quote) == do_not_quote
 

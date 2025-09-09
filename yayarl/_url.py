@@ -45,6 +45,7 @@ from ._quoters import (
     UNQUOTER,
     human_quote,
 )
+from ._requests import RequestsMixin
 
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_RELATIVE = frozenset(uses_relative)
@@ -137,7 +138,7 @@ class _InternalURLCache(TypedDict, total=False):
 
 
 def rewrite_module(obj: _T) -> _T:
-    obj.__module__ = "yarl"
+    obj.__module__ = "yayarl"
     return obj
 
 
@@ -266,7 +267,7 @@ from_parts = lru_cache(from_parts_uncached)
 
 
 @rewrite_module
-class URL:
+class URL(RequestsMixin):
     # Don't derive from str
     # follow pathlib.Path design
     # probably URL will not suffer from pathlib problems:
@@ -537,8 +538,6 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name: str) -> "URL":
-        if not isinstance(name, str):
-            return NotImplemented  # type: ignore[unreachable]
         return self._make_child((str(name),))
 
     def __mod__(self, query: Query) -> "URL":

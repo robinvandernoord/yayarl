@@ -1,6 +1,6 @@
 import pytest
 
-from yarl._path import normalize_path
+from yayarl._path import normalize_path
 
 PATHS = [
     # No dots
