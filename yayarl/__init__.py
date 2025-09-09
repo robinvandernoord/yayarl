@@ -1,7 +1,7 @@
 from ._query import Query, QueryVariable, SimpleQuery
 from ._url import URL, cache_clear, cache_configure, cache_info
 
-__version__ = "2.2.0"
+__version__ = "2.2.1"
 
 __all__ = (
     "URL",
