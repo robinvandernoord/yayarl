@@ -4,12 +4,22 @@ import warnings
 from collections.abc import Mapping, Sequence
 from enum import Enum
 from functools import _CacheInfo, lru_cache
+from importlib.util import find_spec
 from ipaddress import ip_address
-from typing import TYPE_CHECKING, Any, NoReturn, TypedDict, TypeVar, Union, overload
-from urllib.parse import SplitResult, uses_relative
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    NoReturn,
+    TypedDict,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
+from urllib.parse import SplitResult, scheme_chars, uses_relative
 
 import idna
-from multidict import MultiDict, MultiDictProxy
+from multidict import MultiDict, MultiDictProxy, istr
 from propcache.api import under_cached_property as cached_property
 
 from ._parse import (
@@ -47,8 +57,17 @@ from ._quoters import (
 )
 from ._requests import RequestsMixin
 
+# Avoid Pydantic import if not used (increases yarl's import time by 3-7x).
+HAS_PYDANTIC = find_spec("pydantic_core") is not None
+if TYPE_CHECKING:
+    from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
+    from pydantic.json_schema import JsonSchemaValue
+    from pydantic_core import CoreSchema
+
+
 DEFAULT_PORTS = {"http": 80, "https": 443, "ws": 80, "wss": 443, "ftp": 21}
 USES_RELATIVE = frozenset(uses_relative)
+_SCHEME_CHARS = frozenset(scheme_chars)
 
 # Special schemes https://url.spec.whatwg.org/#special-scheme
 # are not allowed to have an empty host https://url.spec.whatwg.org/#url-representation
@@ -106,16 +125,16 @@ class _InternalURLCache(TypedDict, total=False):
     scheme: str
     raw_authority: str
     authority: str
-    raw_user: Union[str, None]
-    user: Union[str, None]
-    raw_password: Union[str, None]
-    password: Union[str, None]
-    raw_host: Union[str, None]
-    host: Union[str, None]
-    host_subcomponent: Union[str, None]
-    host_port_subcomponent: Union[str, None]
-    port: Union[int, None]
-    explicit_port: Union[int, None]
+    raw_user: str | None
+    user: str | None
+    raw_password: str | None
+    password: str | None
+    raw_host: str | None
+    host: str | None
+    host_subcomponent: str | None
+    host_port_subcomponent: str | None
+    port: int | None
+    explicit_port: int | None
     raw_path: str
     path: str
     _parsed_query: list[tuple[str, str]]
@@ -142,11 +161,22 @@ def rewrite_module(obj: _T) -> _T:
     return obj
 
 
+def _encode_relative_scheme_colon(path: str) -> str:
+    """Re-encode a scheme-shaped leading ``:`` in a relative path to ``%3A``."""
+    colon_pos = path.find(":")
+    if colon_pos <= 0:
+        return path
+    for c in path[:colon_pos]:
+        if c not in _SCHEME_CHARS:
+            return path
+    return path[:colon_pos] + "%3A" + path[colon_pos + 1 :]
+
+
 @lru_cache
 def encode_url(url_str: str) -> "URL":
     """Parse unencoded URL."""
     cache: _InternalURLCache = {}
-    host: Union[str, None]
+    host: str | None
     scheme, netloc, path, query, fragment = split_url(url_str)
     if not netloc:  # netloc
         host = ""
@@ -186,6 +216,8 @@ def encode_url(url_str: str) -> "URL":
         path = PATH_REQUOTER(path)
         if netloc and "." in path:
             path = normalize_path(path)
+        elif not scheme and not netloc:
+            path = _encode_relative_scheme_colon(path)
     if query:
         query = QUERY_REQUOTER(query)
     if fragment:
@@ -220,10 +252,10 @@ def pre_encoded_url(url_str: str) -> "URL":
 def build_pre_encoded_url(
     scheme: str,
     authority: str,
-    user: Union[str, None],
-    password: Union[str, None],
+    user: str | None,
+    password: str | None,
     host: str,
-    port: Union[int, None],
+    port: int | None,
     path: str,
     query_string: str,
     fragment: str,
@@ -351,7 +383,7 @@ class URL(RequestsMixin):
         val: Union[str, SplitResult, "URL", UndefinedType] = UNDEFINED,
         *,
         encoded: bool = False,
-        strict: Union[bool, None] = None,
+        strict: bool | None = None,
     ) -> "URL":
         if strict is not None:  # pragma: no cover
             warnings.warn("strict parameter is ignored")
@@ -381,12 +413,12 @@ class URL(RequestsMixin):
         *,
         scheme: str = "",
         authority: str = "",
-        user: Union[str, None] = None,
-        password: Union[str, None] = None,
+        user: str | None = None,
+        password: str | None = None,
         host: str = "",
-        port: Union[int, None] = None,
+        port: int | None = None,
         path: str = "",
-        query: Union[Query, None] = None,
+        query: Query | None = None,
         query_string: str = "",
         fragment: str = "",
         encoded: bool = False,
@@ -434,7 +466,7 @@ class URL(RequestsMixin):
 
         self = object.__new__(URL)
         self._scheme = scheme
-        _host: Union[str, None] = None
+        _host: str | None = None
         if authority:
             user, password, _host, port = split_netloc(authority)
             _host = _encode_host(_host, validate_host=False) if _host else ""
@@ -546,11 +578,18 @@ class URL(RequestsMixin):
     def __bool__(self) -> bool:
         return bool(self._netloc or self._path or self._query or self._fragment)
 
-    def __getstate__(self) -> tuple[SplitResult]:
-        return (tuple.__new__(SplitResult, self._val),)
+    def __getstate__(self) -> tuple[SplitURLType]:
+        # Return a plain tuple rather than a ``SplitResult``. Constructing a
+        # ``SplitResult`` via ``tuple.__new__`` skips its ``__init__`` and on
+        # Python 3.15+ leaves ``_keep_empty`` unset, which breaks pickling: the
+        # new ``SplitResult.__getstate__`` indexes a state that ends up as
+        # ``None`` (gh-1632). ``__setstate__`` already unpacks both shapes, so
+        # pickles produced by older yarl releases (which embed a real
+        # ``SplitResult``) still load correctly.
+        return (self._val,)
 
     def __setstate__(
-        self, state: Union[tuple[SplitURLType], tuple[None, _InternalURLCache]]
+        self, state: tuple[SplitURLType] | tuple[None, _InternalURLCache]
     ) -> None:
         if state[0] is None and isinstance(state[1], dict):
             # default style pickle
@@ -677,7 +716,7 @@ class URL(RequestsMixin):
         return make_netloc(self.user, self.password, self.host, self.port)
 
     @cached_property
-    def raw_user(self) -> Union[str, None]:
+    def raw_user(self) -> str | None:
         """Encoded user part of URL.
 
         None if user is missing.
@@ -688,7 +727,7 @@ class URL(RequestsMixin):
         return self._cache["raw_user"]
 
     @cached_property
-    def user(self) -> Union[str, None]:
+    def user(self) -> str | None:
         """Decoded user part of URL.
 
         None if user is missing.
@@ -699,7 +738,7 @@ class URL(RequestsMixin):
         return UNQUOTER(raw_user)
 
     @cached_property
-    def raw_password(self) -> Union[str, None]:
+    def raw_password(self) -> str | None:
         """Encoded password part of URL.
 
         None if password is missing.
@@ -709,7 +748,7 @@ class URL(RequestsMixin):
         return self._cache["raw_password"]
 
     @cached_property
-    def password(self) -> Union[str, None]:
+    def password(self) -> str | None:
         """Decoded password part of URL.
 
         None if password is missing.
@@ -720,7 +759,7 @@ class URL(RequestsMixin):
         return UNQUOTER(raw_password)
 
     @cached_property
-    def raw_host(self) -> Union[str, None]:
+    def raw_host(self) -> str | None:
         """Encoded host part of URL.
 
         None for relative URLs.
@@ -734,7 +773,7 @@ class URL(RequestsMixin):
         return self._cache["raw_host"]
 
     @cached_property
-    def host(self) -> Union[str, None]:
+    def host(self) -> str | None:
         """Decoded host part of URL.
 
         None for relative URLs.
@@ -748,7 +787,7 @@ class URL(RequestsMixin):
         return _idna_decode(raw)
 
     @cached_property
-    def host_subcomponent(self) -> Union[str, None]:
+    def host_subcomponent(self) -> str | None:
         """Return the host subcomponent part of URL.
 
         None for relative URLs.
@@ -770,7 +809,7 @@ class URL(RequestsMixin):
         return f"[{raw}]" if ":" in raw else raw
 
     @cached_property
-    def host_port_subcomponent(self) -> Union[str, None]:
+    def host_port_subcomponent(self) -> str | None:
         """Return the host and port subcomponent part of URL.
 
         Trailing dots are removed from the host part.
@@ -808,7 +847,7 @@ class URL(RequestsMixin):
         return f"[{raw}]:{port}" if ":" in raw else f"{raw}:{port}"
 
     @cached_property
-    def port(self) -> Union[int, None]:
+    def port(self) -> int | None:
         """Port part of URL, with scheme-based fallback.
 
         None for relative URLs or URLs without explicit port and
@@ -820,7 +859,7 @@ class URL(RequestsMixin):
         return DEFAULT_PORTS.get(self._scheme)
 
     @cached_property
-    def explicit_port(self) -> Union[int, None]:
+    def explicit_port(self) -> int | None:
         """Port part of URL, without scheme-based fallback.
 
         None for relative URLs or URLs without explicit port.
@@ -1058,7 +1097,7 @@ class URL(RequestsMixin):
             raise ValueError(msg)
         return from_parts(lower_scheme, netloc, self._path, self._query, self._fragment)
 
-    def with_user(self, user: Union[str, None]) -> "URL":
+    def with_user(self, user: str | None) -> "URL":
         """Return a new URL with user replaced.
 
         Autoencode user if needed.
@@ -1080,7 +1119,7 @@ class URL(RequestsMixin):
         netloc = make_netloc(user, password, encoded_host, self.explicit_port)
         return from_parts(self._scheme, netloc, self._path, self._query, self._fragment)
 
-    def with_password(self, password: Union[str, None]) -> "URL":
+    def with_password(self, password: str | None) -> "URL":
         """Return a new URL with password replaced.
 
         Autoencode password if needed.
@@ -1123,7 +1162,7 @@ class URL(RequestsMixin):
         netloc = make_netloc(self.raw_user, self.raw_password, encoded_host, port)
         return from_parts(self._scheme, netloc, self._path, self._query, self._fragment)
 
-    def with_port(self, port: Union[int, None]) -> "URL":
+    def with_port(self, port: int | None) -> "URL":
         """Return a new URL with port replaced.
 
         Clear port to default if None is passed.
@@ -1230,7 +1269,12 @@ class URL(RequestsMixin):
         >>> url.update_query(a=3, c=4)
         URL('http://example.com/?a=3&b=2&c=4')
         """
-        in_query: Union[str, Mapping[str, QueryVariable], None]
+        in_query: (
+            str
+            | Mapping[str, QueryVariable]
+            | Sequence[tuple[str | istr, SimpleQuery]]
+            | None
+        )
         if kwargs:
             if args:
                 msg = "Either kwargs or single query parameter must be present"
@@ -1253,7 +1297,7 @@ class URL(RequestsMixin):
             qstr: MultiDict[str] = MultiDict(self._parsed_query)
             qstr.update(query_to_pairs(in_query))
             query = get_str_query_from_iterable(qstr.items())
-        elif isinstance(in_query, (bytes, bytearray, memoryview)):  # type: ignore[unreachable]
+        elif isinstance(in_query, (bytes, bytearray, memoryview)):
             msg = "Invalid query type: bytes, bytearray and memoryview are forbidden"
             raise TypeError(msg)
         elif isinstance(in_query, Sequence):
@@ -1261,6 +1305,10 @@ class URL(RequestsMixin):
             # already; only mappings like builtin `dict` which can't have the
             # same key pointing to multiple values are allowed to use
             # `_query_seq_pairs`.
+            if TYPE_CHECKING:
+                in_query = cast(
+                    Sequence[tuple[Union[str, istr], SimpleQuery]], in_query
+                )
             qs: MultiDict[SimpleQuery] = MultiDict(self._parsed_query)
             qs.update(in_query)
             query = get_str_query_from_iterable(qs.items())
@@ -1286,7 +1334,7 @@ class URL(RequestsMixin):
             )
         )
 
-    def with_fragment(self, fragment: Union[str, None]) -> "URL":
+    def with_fragment(self, fragment: str | None) -> "URL":
         """Return a new URL with fragment replaced.
 
         Autoencode fragment if needed.
@@ -1444,13 +1492,15 @@ class URL(RequestsMixin):
 
     def human_repr(self) -> str:
         """Return decoded human readable string for URL representation."""
-        user = human_quote(self.user, "#/:?@[]")
-        password = human_quote(self.password, "#/:?@[]")
+        user = human_quote(self.user, "#/:?@[]\\")
+        password = human_quote(self.password, "#/:?@[]\\")
         if (host := self.host) and ":" in host:
             host = f"[{host}]"
         path = human_quote(self.path, "#?")
         if TYPE_CHECKING:
             assert path is not None
+        if not self._scheme and not self._netloc:
+            path = _encode_relative_scheme_colon(path)
         query_string = "&".join(
             "{}={}".format(human_quote(k, "#&+;="), human_quote(v, "#&+;="))
             for k, v in self.query.items()
@@ -1460,6 +1510,48 @@ class URL(RequestsMixin):
             assert fragment is not None
         netloc = make_netloc(user, password, host, self.explicit_port)
         return unsplit_result(self._scheme, netloc, path, query_string, fragment)
+
+    if HAS_PYDANTIC:
+        # Borrowed from https://docs.pydantic.dev/latest/concepts/types/#handling-third-party-types
+        @classmethod
+        def __get_pydantic_json_schema__(
+            cls,
+            core_schema: "CoreSchema",
+            handler: "GetJsonSchemaHandler",
+        ) -> "JsonSchemaValue":
+            field_schema: dict[str, Any] = {}
+            field_schema.update(type="string", format="uri")
+            return field_schema
+
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls,
+            source_type: type[Self] | type[str],
+            handler: "GetCoreSchemaHandler",
+        ) -> "CoreSchema":
+            # Lazy import: pulling in pydantic_core at module load time
+            # increases yarl's import cost 3-7x for users who don't use
+            # pydantic. Keep this import function-scoped.
+            from pydantic_core import core_schema  # noqa: PLC0415
+
+            from_str_schema = core_schema.chain_schema(
+                [
+                    core_schema.str_schema(),
+                    core_schema.no_info_plain_validator_function(URL),
+                ]
+            )
+
+            return core_schema.json_or_python_schema(
+                json_schema=from_str_schema,
+                python_schema=core_schema.union_schema(
+                    [
+                        # check if it's an instance first before doing any further work
+                        core_schema.is_instance_schema(URL),
+                        from_str_schema,
+                    ]
+                ),
+                serialization=core_schema.plain_serializer_function_ser_schema(str),
+            )
 
 
 _DEFAULT_IDNA_SIZE = 256
@@ -1563,11 +1655,11 @@ def cache_info() -> CacheInfo:
 @rewrite_module
 def cache_configure(
     *,
-    idna_encode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
-    idna_decode_size: Union[int, None] = _DEFAULT_IDNA_SIZE,
-    ip_address_size: Union[int, None, UndefinedType] = UNDEFINED,
-    host_validate_size: Union[int, None, UndefinedType] = UNDEFINED,
-    encode_host_size: Union[int, None, UndefinedType] = UNDEFINED,
+    idna_encode_size: int | None = _DEFAULT_IDNA_SIZE,
+    idna_decode_size: int | None = _DEFAULT_IDNA_SIZE,
+    ip_address_size: int | None | UndefinedType = UNDEFINED,
+    host_validate_size: int | None | UndefinedType = UNDEFINED,
+    encode_host_size: int | None | UndefinedType = UNDEFINED,
 ) -> None:
     """Configure LRU cache sizes."""
     global _idna_decode, _idna_encode, _encode_host
