@@ -55,6 +55,7 @@ from ._quoters import (
     UNQUOTER,
     human_quote,
 )
+from ._requests import RequestsMixin
 
 # Avoid Pydantic import if not used (increases yarl's import time by 3-7x).
 HAS_PYDANTIC = find_spec("pydantic_core") is not None
@@ -156,7 +157,7 @@ class _InternalURLCache(TypedDict, total=False):
 
 
 def rewrite_module(obj: _T) -> _T:
-    obj.__module__ = "yarl"
+    obj.__module__ = "yayarl"
     return obj
 
 
@@ -298,7 +299,7 @@ from_parts = lru_cache(from_parts_uncached)
 
 
 @rewrite_module
-class URL:
+class URL(RequestsMixin):
     # Don't derive from str
     # follow pathlib.Path design
     # probably URL will not suffer from pathlib problems:
@@ -569,8 +570,6 @@ class URL:
         return self._val > other._val
 
     def __truediv__(self, name: str) -> "URL":
-        if not isinstance(name, str):
-            return NotImplemented
         return self._make_child((str(name),))
 
     def __mod__(self, query: Query) -> "URL":

@@ -3,7 +3,7 @@ from urllib.parse import SplitResult, quote, unquote
 
 import pytest
 
-from yarl import URL
+from yayarl import URL
 
 _WHATWG_C0_CONTROL_OR_SPACE = (
     "\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10"
@@ -1040,8 +1040,7 @@ def test_div_path_srting_subclass() -> None:
 
 def test_div_bad_type() -> None:
     url = URL("http://example.com/path/")
-    with pytest.raises(TypeError):
-        url / 3  # type: ignore[operator]
+    assert str(url / 3) == "http://example.com/path/3"
 
 
 def test_div_cleanup_query_and_fragment() -> None:

@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from yarl import URL
+from yayarl import URL
 
 if TYPE_CHECKING:
     import pydantic

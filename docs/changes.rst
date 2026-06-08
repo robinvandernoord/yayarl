@@ -1,18 +1,37 @@
-.. _yarl_changes:
-
 =========
 Changelog
 =========
 
-.. only:: not is_release
+2.3.0 (2026-06-08)
+==================
 
-   To be included in v\ |release| (if present)
-   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Features
+--------
 
-   .. towncrier-draft-entries:: |release| [UNRELEASED DRAFT]
+- Bring up to date with `aio-libs/yarl` (1.24.2)
+- Bump `requests` to `> 2.32.0, < 3`
 
-   Released versions
-   ^^^^^^^^^^^^^^^^^
+2.2.0 (2025-09-09)
+==================
 
-.. include:: ../CHANGES.rst
-   :start-after: .. towncrier release notes start
+Features
+--------
+
+- Bring up to date with `aio-libs/yarl` (1.20.1)
+- Bump `requests` to `~ 2.32.0`
+
+2.1.0 (2023-11-15)
+==================
+
+Features
+--------
+
+- Bring up to date with `aio-libs/yarl` ()
+
+2.0.0 (2023-09-28)
+==================
+
+Features
+--------
+
+- First version of the yayarl fork; add `requests` functionality.

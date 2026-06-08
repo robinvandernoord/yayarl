@@ -1,7 +1,7 @@
 import pickle
 from urllib.parse import SplitResult
 
-from yarl import URL
+from yayarl import URL
 
 # serialize
 

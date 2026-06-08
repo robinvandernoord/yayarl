@@ -1,6 +1,6 @@
 import pytest
 
-from yarl._url import cached_property  # type: ignore[attr-defined]
+from yayarl._url import cached_property  # type: ignore[attr-defined]
 
 
 class A:

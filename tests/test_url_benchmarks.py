@@ -7,7 +7,7 @@ try:
 except ImportError:  # pragma: no branch  # only hit in cibuildwheel
     pytestmark = pytest.mark.skip("pytest-codspeed needs to be installed")
 
-from yarl import URL
+from yayarl import URL
 
 MANY_HOSTS = [f"www.domain{i}.tld" for i in range(256)]
 MANY_URLS = [f"https://www.domain{i}.tld" for i in range(256)]

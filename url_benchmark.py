@@ -1,6 +1,6 @@
 import timeit
 
-from yarl import URL
+from yayarl import URL
 
 MANY_HOSTS = [f"www.domain{i}.tld" for i in range(10000)]
 MANY_URLS = [f"https://www.domain{i}.tld" for i in range(10000)]

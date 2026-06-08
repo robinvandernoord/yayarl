@@ -16,10 +16,12 @@ URL is constructed from :class:`str`:
 
 .. doctest::
 
-   >>> from yarl import URL
+   >>> from yayarl import URL
    >>> url = URL('https://www.python.org/~guido?arg=1#frag')
    >>> url
    URL('https://www.python.org/~guido?arg=1#frag')
+   >>> resp = url.get()
+   <Response [200]>
 
 All URL parts: *scheme*, *user*, *password*, *host*, *port*, *path*,
 *query* and *fragment* are accessible by properties:

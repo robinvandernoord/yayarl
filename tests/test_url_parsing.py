@@ -2,7 +2,7 @@ from urllib.parse import SplitResult
 
 import pytest
 
-from yarl import URL
+from yayarl import URL
 
 
 class TestScheme:

@@ -141,12 +141,7 @@ def _get_setting_value(
 
 
 def _make_pure_python(config_settings: _ConfigDict | None = None) -> bool:
-    return _get_setting_value(
-        config_settings,
-        PURE_PYTHON_CONFIG_SETTING,
-        PURE_PYTHON_ENV_VAR,
-        default=PURE_PYTHON_MODE_CLI_FALLBACK,
-    )
+    return True
 
 
 def _include_cython_line_tracing(
